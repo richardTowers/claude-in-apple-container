@@ -2,19 +2,35 @@
 set -e
 
 IMAGE="claude-code-devcontainer:latest"
-NAME="claude-code"
 MEMORY="8g"
+
+# Derive base name from current directory
+DIR_NAME="$(basename "$(pwd)")"
+# Sanitize: replace non-alphanumeric/hyphen chars with hyphen, lowercase
+DIR_NAME="$(printf '%s' "$DIR_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')"
+BASE_NAME="claude-code-${DIR_NAME}"
+
+# Get list of existing container names
+EXISTING="$(container list --all 2>/dev/null | tail -n +2 | awk '{print $1}')"
+
+# Find a free name (append -2, -3, etc. on collision)
+NAME="$BASE_NAME"
+SUFFIX=2
+while printf '%s\n' "$EXISTING" | grep -qx "$NAME"; do
+  NAME="${BASE_NAME}-${SUFFIX}"
+  SUFFIX=$((SUFFIX + 1))
+done
 
 if [ "$1" = "--devcontainer" ]; then
   exec container run --name "$NAME" --memory "$MEMORY" \
     --volume "$(pwd):/workspace" \
-    --volume claude-code-bashhistory:/commandhistory \
-    --volume claude-code-config:/home/node/.claude \
+    --volume "${NAME}-bashhistory:/commandhistory" \
+    --volume "${NAME}-config:/home/node/.claude" \
     --detach --rm "$IMAGE" sleep infinity
 else
   exec container run --name "$NAME" --memory "$MEMORY" \
     --volume "$(pwd):/workspace" \
-    --volume claude-code-bashhistory:/commandhistory \
-    --volume claude-code-config:/home/node/.claude \
+    --volume "${NAME}-bashhistory:/commandhistory" \
+    --volume "${NAME}-config:/home/node/.claude" \
     -i -t --rm "$IMAGE" zsh
 fi
