@@ -112,17 +112,6 @@ ENV VISUAL=vim
 # Container environment (moved from devcontainer.json containerEnv)
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV CLAUDE_CONFIG_DIR="/home/node/.claude"
-ENV POWERLEVEL9K_DISABLE_GITSTATUS="true"
-
-# Default powerline10k theme
-ARG ZSH_IN_DOCKER_VERSION=1.2.0
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
-  -p git \
-  -p fzf \
-  -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-  -a "source /usr/share/doc/fzf/examples/completion.zsh" \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  -x
 
 # Install rbenv and ruby-build
 RUN git clone https://github.com/rbenv/rbenv.git /home/node/.rbenv && \
