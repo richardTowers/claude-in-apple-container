@@ -81,7 +81,7 @@ USER node
 
 # Install global packages
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
+ENV PATH=$PATH:/usr/local/share/npm-global/bin:/home/node/.local/bin
 
 # Set the default shell to zsh rather than sh
 ENV SHELL=/bin/zsh
@@ -133,7 +133,7 @@ EOF
 RUN curl -fsSL https://claude.ai/install.sh | TARGET=${CLAUDE_CODE_VERSION} bash
 
 # Install Playwright
-RUN npx playwright install
+RUN npm install -g playwright && playwright install
 
 # Copy and set up firewall and entrypoint scripts
 COPY init-firewall.sh entrypoint.sh /usr/local/bin/
