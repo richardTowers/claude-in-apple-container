@@ -1,9 +1,20 @@
 claude-in-apple-container
 =========================
 
-An example running [Claude Code] inside an [apple/container]
+An example running [Claude Code] inside an [apple/container], with support for [dev containers](https://containers.dev/)
 
 <img alt="A rustic wooden crate filled with red apples and straw sitting on a wooden table. The orange, geometric Claude AI starburst logo rests prominently in the center of the crate among the fruit." src="./claude-in-apple-container.png" width="320px">
+
+## Security
+
+An attempt is made to ensure that the container runtime is secure enough to run LLM agents in permissionless mode. You should
+consider your own risk tolerance before trusting this setup though.
+
+Specifically:
+- Using [apple/container] rather than a runtime like docker gives VM level isolation to the container
+- The init-firewall.sh script prevents most internet access from the container (barring some allowed IPs, e.g. GitHub)
+- We `unset SSH_AUTH_SOCK` to work around the annoying behaviour of VSCode (and other IDE's) of forwarding the ssh agent into the container
+- The container runs as a non-root user (`node`, UID 1000), with passwordless sudo restricted to only `/usr/local/bin/init-firewall.sh`
 
 ## Prerequisites
 
