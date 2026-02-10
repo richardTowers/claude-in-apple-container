@@ -43,8 +43,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   procps \
   sudo \
   unzip \
+  locales \
   vim \
   zsh \
+  && sed -i '/en_GB.UTF-8/s/^# //' /etc/locale.gen && locale-gen \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install rbenv build dependencies for compiling Ruby
@@ -77,6 +79,8 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhisto
   && chown -R $USERNAME /commandhistory
 
 # Set `DEVCONTAINER` environment variable to help with orientation
+ENV LANG=en_GB.UTF-8
+ENV LC_ALL=en_GB.UTF-8
 ENV DEVCONTAINER=true
 
 # Create workspace and config directories and set permissions
