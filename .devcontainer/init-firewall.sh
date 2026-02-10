@@ -79,7 +79,7 @@ for domain in \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com"; do
     echo "Resolving $domain..."
-    ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}' | sort -u)
+    ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
         echo "ERROR: Failed to resolve $domain"
         exit 1
@@ -91,7 +91,7 @@ for domain in \
             exit 1
         fi
         echo "Adding $ip for $domain"
-        ipset add allowed-domains "$ip"
+        ipset add allowed-domains -exist "$ip"
     done < <(echo "$ips")
 done
 

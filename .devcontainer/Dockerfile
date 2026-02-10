@@ -6,6 +6,7 @@ ARG TZ
 ENV TZ="$TZ"
 
 ARG CLAUDE_CODE_VERSION=latest
+ARG RUBY_VERSION=3.4.8
 
 # Install basic development tools, browser dependencies and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -123,7 +124,9 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 RUN git clone https://github.com/rbenv/rbenv.git /home/node/.rbenv && \
   git clone https://github.com/rbenv/ruby-build.git /home/node/.rbenv/plugins/ruby-build && \
   echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc && \
-  echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc
+  echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc && \
+  rbenv install "${RUBY_VERSION}" && \
+  rbenv global "${RUBY_VERSION}"
 
 # Prevent VS Code's forwarded SSH agent from leaking into shell sessions
 RUN echo 'unset SSH_AUTH_SOCK' >> /home/node/.zshrc
