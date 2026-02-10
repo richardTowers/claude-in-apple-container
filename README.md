@@ -8,16 +8,18 @@ An example running [Claude Code] inside an [apple/container]
 ## Prerequisites
 
 You'll need:
-- an Apple Silicone device that's newfangled enough to run [apple/container]
+- an Apple Silicon device that's newfangled enough to run [apple/container]
 - a [Claude Code] subscription
 - VSCode with at least version 0.437 of the Dev Containers extension, with `Experimental Apple Container Support` enabled in the settings
 
 ## Tutorial
 
-0) Make sure the `apple/container` runtime is running with `container system start`
-1) Change into the `.devcontainer` directory
-2) Build the container image from [https://github.com/anthropics/claude-code/tree/main/.devcontainer](https://github.com/anthropics/claude-code/tree/main/.devcontainer) with `container build --tag claude-code-devcontainer --file Dockerfile .`
-3) Run the container with:
+1) Make sure the `apple/container` runtime is running with `container system start`
+2) Build the container image:
+   ```
+   container build --tag claude-code-devcontainer --file .devcontainer/Dockerfile .devcontainer
+   ```
+3) From your project directory, run the container:
    ```
    container run --name claude-code --memory 8g \
      --volume "$(pwd):/workspace" \
@@ -25,12 +27,11 @@ You'll need:
      --volume claude-code-config:/home/node/.claude \
      --detach --rm claude-code-devcontainer sleep infinity
    ```
-   The capability flags are needed for the network firewall. The named volumes persist shell history and Claude configuration across container restarts.
+   The named volumes persist shell history and Claude configuration across container restarts.
 4) Run the `Dev Containers: Attach to Running Apple Container...` command in VSCode
-5) Use VSCode's built in terminal to run yourself some claude instances!
+5) Use VSCode's built-in terminal to run yourself some Claude instances!
 
-You might feel okay using `--yolo` mode, as at least your local machine should be protected from what goes on inside the devcontainer
-by the virtualization framework. You still have to be careful with any keys you give processes inside the container though - as soon as you log in to Claude there's at least one valuable secret in the environment: your Claude session token.
+You might feel okay using `--dangerously-skip-permissions` mode, as at least your local machine should be protected from what goes on inside the container by the virtualization framework. You still have to be careful with any keys you give processes inside the container though — as soon as you log in to Claude there's at least one valuable secret in the environment: your Claude session token.
 
 [Claude Code]: https://code.claude.com/docs/en/overview
 [apple/container]: https://github.com/apple/container
