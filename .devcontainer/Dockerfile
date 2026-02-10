@@ -105,6 +105,24 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   -x
 
+# Pre-configure VS Code machine-level settings (applies to any workspace)
+RUN mkdir -p /home/node/.vscode-server/data/Machine && \
+  cat <<'EOF' > /home/node/.vscode-server/data/Machine/settings.json
+{
+  "editor.formatOnSave": true,
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "icon": "terminal-bash"
+    },
+    "zsh": {
+      "path": "zsh"
+    }
+  }
+}
+EOF
+
 # Install Claude
 RUN curl -fsSL https://claude.ai/install.sh | TARGET=${CLAUDE_CODE_VERSION} bash
 
