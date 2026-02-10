@@ -46,6 +46,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   zsh \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install rbenv build dependencies for compiling Ruby
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  autoconf \
+  bison \
+  libffi-dev \
+  libgdbm-dev \
+  libncurses5-dev \
+  libreadline-dev \
+  libssl-dev \
+  libyaml-dev \
+  rustc \
+  zlib1g-dev \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Use legacy iptables as the apple/container kernel doesn't support the nftables kernel API
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
@@ -81,7 +95,7 @@ USER node
 
 # Install global packages
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin:/home/node/.local/bin
+ENV PATH=$PATH:/usr/local/share/npm-global/bin:/home/node/.local/bin:/home/node/.rbenv/bin:/home/node/.rbenv/shims
 
 # Set the default shell to zsh rather than sh
 ENV SHELL=/bin/zsh
@@ -104,6 +118,12 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "source /usr/share/doc/fzf/examples/completion.zsh" \
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   -x
+
+# Install rbenv and ruby-build
+RUN git clone https://github.com/rbenv/rbenv.git /home/node/.rbenv && \
+  git clone https://github.com/rbenv/ruby-build.git /home/node/.rbenv/plugins/ruby-build && \
+  echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc && \
+  echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc
 
 # Prevent VS Code's forwarded SSH agent from leaking into shell sessions
 RUN echo 'unset SSH_AUTH_SOCK' >> /home/node/.zshrc
