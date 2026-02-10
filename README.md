@@ -22,9 +22,24 @@ You'll need:
    ```
    Or, if you prefer to build it yourself:
    ```
-   container build --tag claude-code-devcontainer --file .devcontainer/Dockerfile .devcontainer
+   container build --memory 8g --tag claude-code-devcontainer --file .devcontainer/Dockerfile .devcontainer
    ```
-3) From your project directory, run the container:
+3) Optionally, copy the `claude-container` helper script onto your PATH:
+   ```
+   cp claude-container /usr/local/bin/
+   ```
+4) From your project directory, run the container. You can either use the helper script or run the command directly:
+
+   **Using the helper script** — get an interactive zsh shell:
+   ```
+   claude-container
+   ```
+   Or, to start a detached container for use with VS Code:
+   ```
+   claude-container --devcontainer
+   ```
+
+   **Or, run the command directly:**
    ```
    container run --name claude-code --memory 8g \
      --volume "$(pwd):/workspace" \
@@ -33,8 +48,8 @@ You'll need:
      --detach --rm claude-code-devcontainer:latest sleep infinity
    ```
    The named volumes persist shell history and Claude configuration across container restarts.
-4) Run the `Dev Containers: Attach to Running Apple Container...` command in VSCode
-5) Use VSCode's built-in terminal to run yourself some Claude instances!
+5) If using `--devcontainer` mode (or the direct command), run the `Dev Containers: Attach to Running Apple Container...` command in VSCode
+6) Use VSCode's built-in terminal to run yourself some Claude instances!
 
 You might feel okay using `--dangerously-skip-permissions` mode, as at least your local machine should be protected from what goes on inside the container by the virtualization framework. You still have to be careful with any keys you give processes inside the container though — as soon as you log in to Claude there's at least one valuable secret in the environment: your Claude session token.
 

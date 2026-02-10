@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+IMAGE="claude-code-devcontainer:latest"
+NAME="claude-code"
+MEMORY="8g"
+
+if [ "$1" = "--devcontainer" ]; then
+  exec container run --name "$NAME" --memory "$MEMORY" \
+    --volume "$(pwd):/workspace" \
+    --volume claude-code-bashhistory:/commandhistory \
+    --volume claude-code-config:/home/node/.claude \
+    --detach --rm "$IMAGE" sleep infinity
+else
+  exec container run --name "$NAME" --memory "$MEMORY" \
+    --volume "$(pwd):/workspace" \
+    --volume claude-code-bashhistory:/commandhistory \
+    --volume claude-code-config:/home/node/.claude \
+    -i -t --rm "$IMAGE" zsh
+fi
