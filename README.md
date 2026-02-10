@@ -15,7 +15,12 @@ You'll need:
 ## Tutorial
 
 1) Make sure the `apple/container` runtime is running with `container system start`
-2) Build the container image:
+2) Pull the pre-built container image (if you trust me):
+   ```
+   container image pull ghcr.io/richardtowers/claude-in-apple-container/devcontainer:latest
+   container image tag ghcr.io/richardtowers/claude-in-apple-container/devcontainer:latest claude-code-devcontainer:latest
+   ```
+   Or, if you prefer to build it yourself:
    ```
    container build --tag claude-code-devcontainer --file .devcontainer/Dockerfile .devcontainer
    ```
@@ -25,7 +30,7 @@ You'll need:
      --volume "$(pwd):/workspace" \
      --volume claude-code-bashhistory:/commandhistory \
      --volume claude-code-config:/home/node/.claude \
-     --detach --rm claude-code-devcontainer sleep infinity
+     --detach --rm claude-code-devcontainer:latest sleep infinity
    ```
    The named volumes persist shell history and Claude configuration across container restarts.
 4) Run the `Dev Containers: Attach to Running Apple Container...` command in VSCode
