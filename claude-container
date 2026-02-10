@@ -1,36 +1,129 @@
-#!/bin/sh
-set -e
+#!/usr/bin/env python3
+"""Launch a claude-code devcontainer."""
 
-IMAGE="claude-code-devcontainer:latest"
-MEMORY="8g"
+import argparse
+import os
+import re
+import subprocess
+import sys
+import textwrap
 
-# Derive base name from current directory
-DIR_NAME="$(basename "$(pwd)")"
-# Sanitize: replace non-alphanumeric/hyphen chars with hyphen, lowercase
-DIR_NAME="$(printf '%s' "$DIR_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')"
-BASE_NAME="claude-code-${DIR_NAME}"
 
-# Get list of existing container names
-EXISTING="$(container list --all 2>/dev/null | tail -n +2 | awk '{print $1}')"
+def sanitize_name(dir_name: str) -> str:
+    """Lowercase, replace non-[a-z0-9-] with '-', collapse runs, strip edges."""
+    name = dir_name.lower()
+    name = re.sub(r"[^a-z0-9-]", "-", name)
+    name = re.sub(r"-{2,}", "-", name)
+    name = name.strip("-")
+    return name
 
-# Find a free name (append -2, -3, etc. on collision)
-NAME="$BASE_NAME"
-SUFFIX=2
-while printf '%s\n' "$EXISTING" | grep -qx "$NAME"; do
-  NAME="${BASE_NAME}-${SUFFIX}"
-  SUFFIX=$((SUFFIX + 1))
-done
 
-if [ "$1" = "--devcontainer" ]; then
-  exec container run --name "$NAME" --memory "$MEMORY" \
-    --volume "$(pwd):/workspace" \
-    --volume "${NAME}-bashhistory:/commandhistory" \
-    --volume "${NAME}-config:/home/node/.claude" \
-    --detach --rm "$IMAGE" sleep infinity
-else
-  exec container run --name "$NAME" --memory "$MEMORY" \
-    --volume "$(pwd):/workspace" \
-    --volume "${NAME}-bashhistory:/commandhistory" \
-    --volume "${NAME}-config:/home/node/.claude" \
-    -i -t --rm "$IMAGE" zsh
-fi
+def get_existing_containers() -> set:
+    """Return a set of all existing container names."""
+    result = subprocess.run(
+        ["container", "list", "--all"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return set()
+    lines = result.stdout.splitlines()
+    # Skip the header line
+    return {line.split()[0] for line in lines[1:] if line.strip()}
+
+
+def find_free_name(base_name: str, existing: set) -> str:
+    """Return base_name, or base_name-2, -3, … until not in existing."""
+    if base_name not in existing:
+        return base_name
+    suffix = 2
+    while True:
+        candidate = f"{base_name}-{suffix}"
+        if candidate not in existing:
+            return candidate
+        suffix += 1
+
+
+def generate_zsh_completion() -> str:
+    """Return a zsh completion script."""
+    return textwrap.dedent("""\
+        #compdef claude-container
+        _claude-container() {
+            _arguments \\
+                '--help[Show help message and exit]' \\
+                '--devcontainer[Run detached (sleep infinity) instead of interactive zsh]' \\
+                '--name[Override the container name]:name' \\
+                '--memory[Container memory limit]:memory' \\
+                '--image[Container image]:image' \\
+                '--shell-completion[Print a zsh completion script and exit]'
+        }
+    """)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="claude-container",
+        description="Launch a claude-code devcontainer.",
+    )
+    parser.add_argument(
+        "--devcontainer",
+        action="store_true",
+        default=False,
+        help="Run detached (sleep infinity) instead of interactive zsh",
+    )
+    parser.add_argument(
+        "--name",
+        default=None,
+        help="Override the container name (default: auto-derived from cwd)",
+    )
+    parser.add_argument(
+        "--memory",
+        default="8g",
+        help="Container memory limit (default: 8g)",
+    )
+    parser.add_argument(
+        "--image",
+        default="claude-code-devcontainer:latest",
+        help="Container image (default: claude-code-devcontainer:latest)",
+    )
+    parser.add_argument(
+        "--shell-completion",
+        action="store_true",
+        default=False,
+        help="Print a zsh completion script and exit",
+    )
+    args = parser.parse_args()
+
+    if args.shell_completion:
+        print(generate_zsh_completion())
+        sys.exit(0)
+
+    # Resolve container name
+    if args.name:
+        name = args.name
+    else:
+        dir_name = sanitize_name(os.path.basename(os.getcwd()))
+        base_name = f"claude-code-{dir_name}"
+        existing = get_existing_containers()
+        name = find_free_name(base_name, existing)
+
+    cwd = os.getcwd()
+    cmd = [
+        "container", "run",
+        "--name", name,
+        "--memory", args.memory,
+        "--volume", f"{cwd}:/workspace",
+        "--volume", f"{name}-bashhistory:/commandhistory",
+        "--volume", f"{name}-config:/home/node/.claude",
+    ]
+
+    if args.devcontainer:
+        cmd += ["--detach", "--rm", args.image, "sleep", "infinity"]
+    else:
+        cmd += ["-i", "-t", "--rm", args.image, "zsh"]
+
+    os.execvp("container", cmd)
+
+
+if __name__ == "__main__":
+    main()
