@@ -105,6 +105,9 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   -x
 
+# Prevent VS Code's forwarded SSH agent from leaking into shell sessions
+RUN echo 'unset SSH_AUTH_SOCK' >> /home/node/.zshrc
+
 # Pre-configure VS Code machine-level settings (applies to any workspace)
 RUN mkdir -p /home/node/.vscode-server/data/Machine && \
   cat <<'EOF' > /home/node/.vscode-server/data/Machine/settings.json
@@ -119,6 +122,9 @@ RUN mkdir -p /home/node/.vscode-server/data/Machine && \
     "zsh": {
       "path": "zsh"
     }
+  },
+  "terminal.integrated.env.linux": {
+    "SSH_AUTH_SOCK": null
   }
 }
 EOF
