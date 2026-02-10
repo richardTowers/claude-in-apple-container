@@ -46,6 +46,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   zsh \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Use legacy iptables as the apple/container kernel doesn't support the nftables kernel API
+RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
   chown -R node:node /usr/local/share
@@ -87,6 +90,11 @@ ENV SHELL=/bin/zsh
 ENV EDITOR=vim
 ENV VISUAL=vim
 
+# Container environment (moved from devcontainer.json containerEnv)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV CLAUDE_CONFIG_DIR="/home/node/.claude"
+ENV POWERLEVEL9K_DISABLE_GITSTATUS="true"
+
 # Default powerline10k theme
 ARG ZSH_IN_DOCKER_VERSION=1.2.0
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
@@ -103,10 +111,13 @@ RUN curl -fsSL https://claude.ai/install.sh | TARGET=${CLAUDE_CODE_VERSION} bash
 # Install Playwright
 RUN npx playwright install
 
-# Copy and set up firewall script
-COPY init-firewall.sh /usr/local/bin/
+# Copy and set up firewall and entrypoint scripts
+COPY init-firewall.sh entrypoint.sh /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.sh && \
+RUN chmod +x /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["zsh"]

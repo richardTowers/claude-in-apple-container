@@ -17,7 +17,15 @@ You'll need:
 0) Make sure the `apple/container` runtime is running with `container system start`
 1) Change into the `.devcontainer` directory
 2) Build the container image from [https://github.com/anthropics/claude-code/tree/main/.devcontainer](https://github.com/anthropics/claude-code/tree/main/.devcontainer) with `container build --tag claude-code-devcontainer --file Dockerfile .`
-3) Run the container with `container run --name claude-code --memory 8g --volume ${YOUR_PROJECT_DIR}:/code --detach --rm claude-code-devcontainer sleep infinity`
+3) Run the container with:
+   ```
+   container run --name claude-code --memory 8g \
+     --volume "$(pwd):/workspace" \
+     --volume claude-code-bashhistory:/commandhistory \
+     --volume claude-code-config:/home/node/.claude \
+     --detach --rm claude-code-devcontainer sleep infinity
+   ```
+   The capability flags are needed for the network firewall. The named volumes persist shell history and Claude configuration across container restarts.
 4) Run the `Dev Containers: Attach to Running Apple Container...` command in VSCode
 5) Use VSCode's built in terminal to run yourself some claude instances!
 
