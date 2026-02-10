@@ -3,7 +3,7 @@ claude-in-apple-container
 
 An example running [Claude Code] inside an [apple/container]
 
-![A rustic wooden crate filled with red apples and straw sitting on a wooden table. The orange, geometric Claude AI starburst logo rests prominently in the center of the crate among the fruit.](./claude-in-apple-container.png)
+<img alt="A rustic wooden crate filled with red apples and straw sitting on a wooden table. The orange, geometric Claude AI starburst logo rests prominently in the center of the crate among the fruit." src="./claude-in-apple-container.png" width="320px">
 
 ## Prerequisites
 
