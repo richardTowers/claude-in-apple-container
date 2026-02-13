@@ -8,9 +8,11 @@ ENV TZ="$TZ"
 ARG CLAUDE_CODE_VERSION=latest
 ARG RUBY_VERSION=3.4.8
 
-# Install basic development tools, browser dependencies and iptables/ipset
+# Install basic development tools, browser dependencies, iptables/ipset, and rbenv build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
   aggregate \
+  autoconf \
+  bison \
   dnsutils \
   fzf \
   gh \
@@ -27,10 +29,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libatspi2.0-0 \
   libcups2 \
   libdbus-1-3 \
+  libffi-dev \
   libgbm1 \
+  libgdbm-dev \
   libgtk-3-0 \
+  libncurses5-dev \
   libnspr4 \
   libnss3 \
+  libreadline-dev \
+  libssl-dev \
   libx11-xcb1 \
   libxcomposite1 \
   libxcursor1 \
@@ -38,29 +45,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libxfixes3 \
   libxkbcommon0 \
   libxrandr2 \
+  libyaml-dev \
+  locales \
   man-db \
   nano \
   procps \
+  rustc \
   sudo \
   unzip \
-  locales \
   vim \
+  zlib1g-dev \
   zsh \
   && sed -i '/en_GB.UTF-8/s/^# //' /etc/locale.gen && locale-gen \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install rbenv build dependencies for compiling Ruby
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  autoconf \
-  bison \
-  libffi-dev \
-  libgdbm-dev \
-  libncurses5-dev \
-  libreadline-dev \
-  libssl-dev \
-  libyaml-dev \
-  rustc \
-  zlib1g-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Use legacy iptables as the apple/container kernel doesn't support the nftables kernel API
