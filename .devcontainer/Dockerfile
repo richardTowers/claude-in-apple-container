@@ -5,9 +5,6 @@ FROM node:20
 ARG TZ
 ENV TZ="$TZ"
 
-ARG CLAUDE_CODE_VERSION=latest
-ARG RUBY_VERSION=3.4.8
-
 # Install basic development tools, browser dependencies, and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
   aggregate \
@@ -72,6 +69,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
   dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
+ARG RUBY_VERSION=3.4.8
 # Install rbenv, compile Ruby, then remove build dependencies to save image space
 RUN apt-get update && apt-get install -y --no-install-recommends \
   autoconf \
@@ -106,20 +104,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set up non-root user
 USER node
 
-# Install global packages
-ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin:/home/node/.local/bin:/home/node/.rbenv/bin:/home/node/.rbenv/shims
-
-# Set the default shell to zsh rather than sh
-ENV SHELL=/bin/zsh
-
-# Set the default editor and visual
-ENV EDITOR=vim
-ENV VISUAL=vim
-
-# Container environment (moved from devcontainer.json containerEnv)
-ENV NODE_OPTIONS="--max-old-space-size=4096"
-ENV CLAUDE_CONFIG_DIR="/home/node/.claude"
+# Environment configuration
+ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global \
+  PATH=$PATH:/usr/local/share/npm-global/bin:/home/node/.local/bin:/home/node/.rbenv/bin:/home/node/.rbenv/shims \
+  SHELL=/bin/zsh \
+  EDITOR=vim \
+  VISUAL=vim \
+  NODE_OPTIONS="--max-old-space-size=4096" \
+  CLAUDE_CONFIG_DIR="/home/node/.claude"
 
 # Configure shell: rbenv integration and prevent SSH agent leaking
 RUN echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc \
@@ -148,6 +140,7 @@ RUN mkdir -p /home/node/.vscode-server/data/Machine && \
 EOF
 
 # Install Claude
+ARG CLAUDE_CODE_VERSION=latest
 RUN curl -fsSL https://claude.ai/install.sh | TARGET=${CLAUDE_CODE_VERSION} bash
 
 # Install Playwright
