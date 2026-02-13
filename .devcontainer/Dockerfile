@@ -8,11 +8,9 @@ ENV TZ="$TZ"
 ARG CLAUDE_CODE_VERSION=latest
 ARG RUBY_VERSION=3.4.8
 
-# Install basic development tools, browser dependencies, iptables/ipset, and rbenv build dependencies
+# Install basic development tools, browser dependencies, and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
   aggregate \
-  autoconf \
-  bison \
   dnsutils \
   fzf \
   gh \
@@ -29,15 +27,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libatspi2.0-0 \
   libcups2 \
   libdbus-1-3 \
-  libffi-dev \
   libgbm1 \
-  libgdbm-dev \
   libgtk-3-0 \
-  libncurses5-dev \
   libnspr4 \
   libnss3 \
-  libreadline-dev \
-  libssl-dev \
   libx11-xcb1 \
   libxcomposite1 \
   libxcursor1 \
@@ -45,16 +38,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libxfixes3 \
   libxkbcommon0 \
   libxrandr2 \
-  libyaml-dev \
   locales \
   man-db \
   nano \
   procps \
-  rustc \
   sudo \
   unzip \
   vim \
-  zlib1g-dev \
   zsh \
   && sed -i '/en_GB.UTF-8/s/^# //' /etc/locale.gen && locale-gen \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -91,6 +81,37 @@ RUN ARCH=$(dpkg --print-architecture) && \
   dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
+# Install rbenv, compile Ruby, then remove build dependencies to save image space
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  autoconf \
+  bison \
+  libffi-dev \
+  libgdbm-dev \
+  libncurses5-dev \
+  libreadline-dev \
+  libssl-dev \
+  libyaml-dev \
+  rustc \
+  zlib1g-dev \
+  && git clone https://github.com/rbenv/rbenv.git /home/node/.rbenv \
+  && git clone https://github.com/rbenv/ruby-build.git /home/node/.rbenv/plugins/ruby-build \
+  && RBENV_ROOT=/home/node/.rbenv /home/node/.rbenv/bin/rbenv install "${RUBY_VERSION}" \
+  && RBENV_ROOT=/home/node/.rbenv /home/node/.rbenv/bin/rbenv global "${RUBY_VERSION}" \
+  && chown -R node:node /home/node/.rbenv \
+  && apt-get purge -y \
+    autoconf \
+    bison \
+    libffi-dev \
+    libgdbm-dev \
+    libncurses5-dev \
+    libreadline-dev \
+    libssl-dev \
+    libyaml-dev \
+    rustc \
+    zlib1g-dev \
+  && apt-get autoremove -y \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Set up non-root user
 USER node
 
@@ -109,13 +130,9 @@ ENV VISUAL=vim
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV CLAUDE_CONFIG_DIR="/home/node/.claude"
 
-# Install rbenv and ruby-build
-RUN git clone https://github.com/rbenv/rbenv.git /home/node/.rbenv && \
-  git clone https://github.com/rbenv/ruby-build.git /home/node/.rbenv/plugins/ruby-build && \
-  echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc && \
-  echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc && \
-  rbenv install "${RUBY_VERSION}" && \
-  rbenv global "${RUBY_VERSION}"
+# Configure rbenv shell integration
+RUN echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc && \
+  echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc
 
 # Prevent VS Code's forwarded SSH agent from leaking into shell sessions
 RUN echo 'unset SSH_AUTH_SOCK' >> /home/node/.zshrc
