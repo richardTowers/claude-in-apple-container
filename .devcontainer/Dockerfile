@@ -49,29 +49,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && sed -i '/en_GB.UTF-8/s/^# //' /etc/locale.gen && locale-gen \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Use legacy iptables as the apple/container kernel doesn't support the nftables kernel API
-RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-
-# Ensure default node user has access to /usr/local/share
-RUN mkdir -p /usr/local/share/npm-global && \
-  chown -R node:node /usr/local/share
-
-ARG USERNAME=node
-
-# Persist bash history.
-RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
+# System setup: legacy iptables, directories, and permissions
+RUN update-alternatives --set iptables /usr/sbin/iptables-legacy \
+  && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy \
+  && mkdir -p /usr/local/share/npm-global \
+  && chown -R node:node /usr/local/share \
   && mkdir /commandhistory \
   && touch /commandhistory/.bash_history \
-  && chown -R $USERNAME /commandhistory
+  && chown -R node:node /commandhistory \
+  && mkdir -p /workspace /home/node/.claude \
+  && chown -R node:node /workspace /home/node/.claude
 
-# Set `DEVCONTAINER` environment variable to help with orientation
 ENV LANG=en_GB.UTF-8
 ENV LC_ALL=en_GB.UTF-8
 ENV DEVCONTAINER=true
-
-# Create workspace and config directories and set permissions
-RUN mkdir -p /workspace /home/node/.claude && \
-  chown -R node:node /workspace /home/node/.claude
 
 WORKDIR /workspace
 
@@ -130,12 +121,10 @@ ENV VISUAL=vim
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV CLAUDE_CONFIG_DIR="/home/node/.claude"
 
-# Configure rbenv shell integration
-RUN echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc && \
-  echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc
-
-# Prevent VS Code's forwarded SSH agent from leaking into shell sessions
-RUN echo 'unset SSH_AUTH_SOCK' >> /home/node/.zshrc
+# Configure shell: rbenv integration and prevent SSH agent leaking
+RUN echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc \
+  && echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc \
+  && echo 'unset SSH_AUTH_SOCK' >> /home/node/.zshrc
 
 # Pre-configure VS Code machine-level settings (applies to any workspace)
 RUN mkdir -p /home/node/.vscode-server/data/Machine && \
