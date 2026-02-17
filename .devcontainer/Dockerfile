@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   nano \
   procps \
   sudo \
+  tmux \
   unzip \
   vim \
   zsh \
