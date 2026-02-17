@@ -117,6 +117,10 @@ def main():
         "--volume", f"{name}-config:/home/node/.claude",
     ]
 
+    # If running inside Ghostty, set TERM to xterm-ghostty
+    if os.environ.get("GHOSTTY_RESOURCES_DIR"):
+        cmd += ["--env", "TERM=xterm-ghostty"]
+
     if args.devcontainer:
         cmd += ["--detach", "--rm", args.image, "sleep", "infinity"]
     else:
