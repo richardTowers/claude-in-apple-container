@@ -69,6 +69,9 @@ RUN ARCH=$(dpkg --print-architecture) && \
   dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
+ARG STARSHIP_VERSION=1.22.1
+RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --version "v${STARSHIP_VERSION}"
+
 ARG RUBY_VERSION=3.4.8
 # Install rbenv, compile Ruby, then remove build dependencies to save image space
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -113,8 +116,10 @@ ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global \
   NODE_OPTIONS="--max-old-space-size=4096" \
   CLAUDE_CONFIG_DIR="/home/node/.claude"
 
-# Configure shell: rbenv integration and prevent SSH agent leaking
-RUN echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc \
+# Install dotfiles and configure shell
+RUN git clone https://github.com/richardtowers/dotfiles.git /home/node/dotfiles \
+  && cd /home/node/dotfiles && bash install.sh \
+  && echo 'eval "$(rbenv init - zsh)"' >> /home/node/.zshrc \
   && echo 'eval "$(rbenv init - bash)"' >> /home/node/.bashrc \
   && echo 'unset SSH_AUTH_SOCK' >> /home/node/.zshrc
 
