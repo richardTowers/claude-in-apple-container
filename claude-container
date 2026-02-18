@@ -52,6 +52,7 @@ def generate_zsh_completion() -> str:
             _arguments \\
                 '--help[Show help message and exit]' \\
                 '--devcontainer[Run detached (sleep infinity) instead of interactive zsh]' \\
+                '--dry-run[Print the command that would be run instead of running it]' \\
                 '--name[Override the container name]:name' \\
                 '--memory[Container memory limit]:memory' \\
                 '--image[Container image]:image' \\
@@ -85,6 +86,12 @@ def main():
         "--image",
         default="claude-code-devcontainer:latest",
         help="Container image (default: claude-code-devcontainer:latest)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="Print the command that would be run instead of running it",
     )
     parser.add_argument(
         "--shell-completion",
@@ -126,7 +133,11 @@ def main():
     else:
         cmd += ["-i", "-t", "--rm", args.image, "zsh"]
 
-    os.execvp("container", cmd)
+    if args.dry_run:
+        import shlex
+        print(shlex.join(cmd))
+    else:
+        os.execvp("container", cmd)
 
 
 if __name__ == "__main__":
